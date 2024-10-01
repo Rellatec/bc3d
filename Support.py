@@ -29,7 +29,7 @@ st.write("This interactive dashboard provides insights into how the Lens Cleanin
 st.sidebar.title("Filters")
 filter_option = st.sidebar.selectbox(
     'Choose LCS Status to display:',
-    ('LCS On', 'LCS Off')
+    ('Has LCS?', 'Has not LCS?')
 )
 
 # Load the Excel data into a pandas DataFrame
