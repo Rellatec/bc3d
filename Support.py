@@ -40,7 +40,7 @@ df = pd.read_excel(file_path)
 df['utcTime'] = pd.to_datetime(df['utcTime'], errors='coerce')
 
 # Filter the data for valid dates and necessary columns
-df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'MainStatusMC', 'sourceID'])
+df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'MainStatusMC', 'sourceID', 'bucketCamera'])
 
 # Apply the filter based on the 'hasLCS' column (True for On, False for Off)
 if filter_option == 'LCS On':
@@ -52,47 +52,80 @@ elif filter_option == 'LCS Off':
 valid_statuses = ['GOOD', 'WRONG', 'AVERAGE']
 df_filtered = df_filtered[df_filtered['MainStatusMC'].isin(valid_statuses)]
 
-# Group the data by month and sourceID
-df_filtered['month'] = df_filtered['utcTime'].dt.to_period('M')
-df_filtered['month'] = df_filtered['month'].dt.to_timestamp()
+# List of available source IDs after filtering by LCS status
+available_source_ids = df_filtered['sourceID'].unique()
 
-# Create an option to select specific sourceID from the sidebar
-source_ids = df_filtered['sourceID'].unique()
-selected_source = st.sidebar.selectbox('Select Source ID:', source_ids)
+# Retain the previously selected source ID if it exists, otherwise use the first one
+if 'selected_source' in st.session_state and st.session_state['selected_source'] in available_source_ids:
+    selected_source = st.session_state['selected_source']
+elif 'selected_source' in st.session_state and st.session_state['selected_source'] not in available_source_ids:
+    st.warning(f"The selected Source ID ({st.session_state['selected_source']}) is not available for the current filter.")
+    selected_source = available_source_ids[0] if len(available_source_ids) > 0 else None
+else:
+    selected_source = available_source_ids[0] if len(available_source_ids) > 0 else None
 
-# Filter the data by the selected sourceID
-df_filtered = df_filtered[df_filtered['sourceID'] == selected_source]
+# Sidebar dropdown for selecting source ID
+if selected_source:
+    selected_source = st.sidebar.selectbox('Select Source ID:', available_source_ids, index=list(available_source_ids).index(selected_source))
+    # Store the selected source ID in session_state
+    st.session_state['selected_source'] = selected_source
+else:
+    st.error("No available Source IDs for the selected LCS filter.")
 
-# Count occurrences of each status by month for the selected sourceID
-lcs_trend_month = df_filtered.groupby(['month', 'MainStatusMC']).size().unstack(fill_value=0)
+# If a valid source is selected, continue processing
+if selected_source:
+    # Filter the data by the selected sourceID
+    df_filtered = df_filtered[df_filtered['sourceID'] == selected_source]
 
-# Layout with columns to organize the dashboard
-col1, col2 = st.columns([3, 1])
+    # Group the data by month and sourceID
+    df_filtered['month'] = df_filtered['utcTime'].dt.to_period('M')
+    df_filtered['month'] = df_filtered['month'].dt.to_timestamp()
 
-# Plot trends with custom colors
-fig = go.Figure()
-status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
-for status in lcs_trend_month.columns:
-    fig.add_trace(go.Scatter(x=lcs_trend_month.index, y=lcs_trend_month[status], 
-                             mode='lines+markers', name=f'{status}', 
-                             line=dict(color=status_colors.get(status, 'gray'))))
+    # Count occurrences of each status by month for the selected sourceID
+    lcs_trend_month = df_filtered.groupby(['month', 'MainStatusMC']).size().unstack(fill_value=0)
 
-fig.update_layout(
-    title=f'Bucket Camera Performance Trends Over Months for Source ID: {selected_source} ({filter_option})',
-    xaxis_title='Month', yaxis_title='Count', legend_title='Status', template='plotly_white'
-)
-col1.plotly_chart(fig, use_container_width=True)
+    # Layout with columns to organize the dashboard
+    col1, col2 = st.columns([3, 1])
 
-# Status counts
-total_good = df_filtered[df_filtered['MainStatusMC'] == 'GOOD'].shape[0]
-total_wrong = df_filtered[df_filtered['MainStatusMC'] == 'WRONG'].shape[0]
-total_average = df_filtered[df_filtered['MainStatusMC'] == 'AVERAGE'].shape[0]
+    # Plot trends with custom colors
+    fig = go.Figure()
+    status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
+    for status in lcs_trend_month.columns:
+        fig.add_trace(go.Scatter(x=lcs_trend_month.index, y=lcs_trend_month[status], 
+                                 mode='lines+markers', name=f'{status}', 
+                                 line=dict(color=status_colors.get(status, 'gray'))))
 
-# Bar chart for status counts
-fig_bar = go.Figure()
-fig_bar.add_trace(go.Bar(x=['GOOD', 'WRONG', 'AVERAGE'], 
-                         y=[total_good, total_wrong, total_average],
-                         marker=dict(color=['#00B7F1', 'red', '#DAA520'])))
+    fig.update_layout(
+        title=f'Bucket Camera Performance Trends Over Months for Source ID: {selected_source} ({filter_option})',
+        xaxis_title='Month', yaxis_title='Count', legend_title='Status', template='plotly_white'
+    )
+    col1.plotly_chart(fig, use_container_width=True)
 
-fig_bar.update_layout(title="Overview", xaxis_title="Status", yaxis_title="Count", template='plotly_white')
-col2.plotly_chart(fig_bar, use_container_width=True)
+    # --- Pie chart based on bucketCamera ---
+    # Merge cleaning-related issues (bucketCamera values 1 and 3)
+    df_filtered['bucketCamera'] = df_filtered['bucketCamera'].replace({3: 1})
+
+    # Count occurrences of all bucketCamera values (0-7)
+    bucket_camera_counts = df_filtered['bucketCamera'].value_counts()
+
+    # Map bucketCamera values to meaningful labels
+    bucket_camera_mapping = {
+        0: "Good Condition",
+        1: "Requires Cleaning / Cleaning & Adjustment needed",
+        2: "Requires Adjustment",
+        4: "Camera feed is black",
+        5: "Camera condition unknown",
+        6: "Mono Left/Right faulty",
+        7: "Damaged"
+    }
+    bucket_camera_counts.index = bucket_camera_counts.index.map(bucket_camera_mapping)
+
+    # Create a pie chart
+    fig_pie = go.Figure(data=[go.Pie(labels=bucket_camera_counts.index, 
+                                     values=bucket_camera_counts.values)])
+
+    # Update layout to make the pie chart larger and place it underneath
+    fig_pie.update_layout(title="Bucket Camera Conditions", height=600, font=dict(size=18))
+
+    # Display the pie chart underneath
+    st.plotly_chart(fig_pie, use_container_width=True)
