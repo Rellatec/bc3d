@@ -23,7 +23,7 @@ st.markdown("""
 
 # --- Title and Introduction ---
 st.title('LCS Status and BC3D Performance Analysis')
-st.markdown("This interactive dashboard provides insights into how the Lens Cleaning System (LCS) impacts the performance of the BC3D over time.The analysis is based on performance statuses from 'statusCalc', which reflect the overall health and cleanliness of the cameras. Use the filters to explore trends.")
+st.markdown("This interactive dashboard provides insights into how the Lens Cleaning System (LCS) impacts the performance of the BC3D over time. The analysis is based on performance statuses from 'statusCalc', which reflect the overall health and cleanliness of the cameras. Use the filters to explore trends.")
 
 # --- Sidebar for Filter Options ---
 st.sidebar.title("Filters")
@@ -40,7 +40,7 @@ df = pd.read_excel(file_path)
 df['utcTime'] = pd.to_datetime(df['utcTime'], errors='coerce')
 
 # Filter the data for valid dates and necessary columns
-df_filtered = df.dropna(subset=['utcTime', 'lcsStatus', 'statusCalc'])
+df_filtered = df.dropna(subset=['utcTime', 'lcsStatus', 'statusCalc', 'sourceID'])
 
 # Apply the filter based on user selection (LCS On, LCS Off, Both)
 if filter_option == 'LCS On':
@@ -52,11 +52,18 @@ elif filter_option == 'LCS Off':
 valid_statuses = ['GOOD', 'WRONG', 'AVERAGE']
 df_filtered = df_filtered[df_filtered['statusCalc'].isin(valid_statuses)]
 
-# Group the data by month
+# Group the data by month and sourceID
 df_filtered['month'] = df_filtered['utcTime'].dt.to_period('M')
 df_filtered['month'] = df_filtered['month'].dt.to_timestamp()
 
-# Count occurrences of each status by month
+# Create an option to select specific sourceID from the sidebar
+source_ids = df_filtered['sourceID'].unique()
+selected_source = st.sidebar.selectbox('Select Source ID:', source_ids)
+
+# Filter the data by the selected sourceID
+df_filtered = df_filtered[df_filtered['sourceID'] == selected_source]
+
+# Count occurrences of each status by month for the selected sourceID
 lcs_trend_month = df_filtered.groupby(['month', 'statusCalc']).size().unstack(fill_value=0)
 
 # Layout with columns to organize the dashboard
@@ -71,7 +78,7 @@ for status in lcs_trend_month.columns:
                              line=dict(color=status_colors.get(status, 'gray'))))
 
 fig.update_layout(
-    title=f'Bucket Camera Performance Trends Over Months ({filter_option})',
+    title=f'Bucket Camera Performance Trends Over Months for Source ID: {selected_source} ({filter_option})',
     xaxis_title='Month', yaxis_title='Count', legend_title='Status', template='plotly_white'
 )
 col1.plotly_chart(fig, use_container_width=True)
@@ -86,18 +93,8 @@ fig_bar = go.Figure()
 fig_bar.add_trace(go.Bar(x=['GOOD', 'WRONG', 'AVERAGE'], 
                          y=[total_good, total_wrong, total_average],
                          marker=dict(color=['#00B7F1', 'red', '#DAA520'])))
+
 fig_bar.update_layout(title="Overview", xaxis_title="Status", yaxis_title="Count", template='plotly_white')
 col2.plotly_chart(fig_bar, use_container_width=True)
 
-# --- Generate Report in Markdown ---
-st.markdown(f"""
-    ## LCS Performance Report
 
-    ### Summary:
-    This report provides a summary of bucket camera performance based on the LCS statuses categorized as **GOOD**, **WRONG**, and **AVERAGE**. The total counts of each status are provided below for the selected filter (**{filter_option}**):
-
-    ### Insights:
-    - The bucket camera recorded a total of **{total_good} GOOD** statuses, indicating that the camera was in good condition.
-    - **{total_wrong} WRONG** statuses were recorded, indicating issues with the camera's feed.
-    - The camera registered **{total_average} AVERAGE** statuses, indicating that the camera required cleaning.
-""")
