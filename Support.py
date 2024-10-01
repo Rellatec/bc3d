@@ -23,13 +23,13 @@ st.markdown("""
 
 # --- Title and Introduction ---
 st.title('LCS Status and BC3D Performance Analysis')
-st.markdown("This interactive dashboard provides insights into how the Lens Cleaning System (LCS) impacts the performance of the BC3D over time. The analysis is based on performance statuses from 'statusCalc', which reflect the overall health and cleanliness of the cameras. Use the filters to explore trends.")
+st.write("This interactive dashboard provides insights into how the Lens Cleaning System (LCS) impacts the performance of the BC3D over time. The analysis is based on performance statuses from 'MainStatusMC', which reflect the overall health and cleanliness of the cameras. Use the filters to explore trends.")
 
 # --- Sidebar for Filter Options ---
 st.sidebar.title("Filters")
 filter_option = st.sidebar.selectbox(
     'Choose LCS Status to display:',
-    ('LCS On', 'LCS Off', 'Both')
+    ('LCS On', 'LCS Off')
 )
 
 # Load the Excel data into a pandas DataFrame
@@ -40,17 +40,17 @@ df = pd.read_excel(file_path)
 df['utcTime'] = pd.to_datetime(df['utcTime'], errors='coerce')
 
 # Filter the data for valid dates and necessary columns
-df_filtered = df.dropna(subset=['utcTime', 'lcsStatus', 'statusCalc', 'sourceID'])
+df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'MainStatusMC', 'sourceID'])
 
-# Apply the filter based on user selection (LCS On, LCS Off, Both)
+# Apply the filter based on the 'hasLCS' column (True for On, False for Off)
 if filter_option == 'LCS On':
-    df_filtered = df_filtered[df_filtered['lcsStatus'] == 1.0]
+    df_filtered = df_filtered[df_filtered['hasLCS'] == True]
 elif filter_option == 'LCS Off':
-    df_filtered = df_filtered[df_filtered['lcsStatus'] == 0.0]
+    df_filtered = df_filtered[df_filtered['hasLCS'] == False]
 
-# Filter out invalid or missing statusCalc values
+# Filter out invalid or missing MainStatusMC values
 valid_statuses = ['GOOD', 'WRONG', 'AVERAGE']
-df_filtered = df_filtered[df_filtered['statusCalc'].isin(valid_statuses)]
+df_filtered = df_filtered[df_filtered['MainStatusMC'].isin(valid_statuses)]
 
 # Group the data by month and sourceID
 df_filtered['month'] = df_filtered['utcTime'].dt.to_period('M')
@@ -64,7 +64,7 @@ selected_source = st.sidebar.selectbox('Select Source ID:', source_ids)
 df_filtered = df_filtered[df_filtered['sourceID'] == selected_source]
 
 # Count occurrences of each status by month for the selected sourceID
-lcs_trend_month = df_filtered.groupby(['month', 'statusCalc']).size().unstack(fill_value=0)
+lcs_trend_month = df_filtered.groupby(['month', 'MainStatusMC']).size().unstack(fill_value=0)
 
 # Layout with columns to organize the dashboard
 col1, col2 = st.columns([3, 1])
@@ -84,9 +84,9 @@ fig.update_layout(
 col1.plotly_chart(fig, use_container_width=True)
 
 # Status counts
-total_good = df_filtered[df_filtered['statusCalc'] == 'GOOD'].shape[0]
-total_wrong = df_filtered[df_filtered['statusCalc'] == 'WRONG'].shape[0]
-total_average = df_filtered[df_filtered['statusCalc'] == 'AVERAGE'].shape[0]
+total_good = df_filtered[df_filtered['MainStatusMC'] == 'GOOD'].shape[0]
+total_wrong = df_filtered[df_filtered['MainStatusMC'] == 'WRONG'].shape[0]
+total_average = df_filtered[df_filtered['MainStatusMC'] == 'AVERAGE'].shape[0]
 
 # Bar chart for status counts
 fig_bar = go.Figure()
@@ -96,5 +96,3 @@ fig_bar.add_trace(go.Bar(x=['GOOD', 'WRONG', 'AVERAGE'],
 
 fig_bar.update_layout(title="Overview", xaxis_title="Status", yaxis_title="Count", template='plotly_white')
 col2.plotly_chart(fig_bar, use_container_width=True)
-
-
