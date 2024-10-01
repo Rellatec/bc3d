@@ -97,7 +97,7 @@ st.markdown(f"""
     This report provides a summary of bucket camera performance based on the LCS statuses categorized as **GOOD**, **WRONG**, and **AVERAGE**. The total counts of each status are provided below for the selected filter (**{filter_option}**):
 
     ### Insights:
-    - The bucket camera recorded a total of **{total_good} GOOD** statuses.
-    - **{total_wrong} WRONG** statuses were recorded.
-    - The camera registered **{total_average} AVERAGE** statuses.
+    - The bucket camera recorded a total of **{total_good} GOOD** statuses, indicating that the camera was in good condition.
+    - **{total_wrong} WRONG** statuses were recorded, indicating issues with the camera's feed.
+    - The camera registered **{total_average} AVERAGE** statuses, indicating that the camera required cleaning.
 """)
