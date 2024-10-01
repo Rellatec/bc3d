@@ -58,74 +58,67 @@ available_source_ids = df_filtered['sourceID'].unique()
 # Retain the previously selected source ID if it exists, otherwise use the first one
 if 'selected_source' in st.session_state and st.session_state['selected_source'] in available_source_ids:
     selected_source = st.session_state['selected_source']
-elif 'selected_source' in st.session_state and st.session_state['selected_source'] not in available_source_ids:
-    st.warning(f"The selected Source ID ({st.session_state['selected_source']}) is not available for the current filter.")
-    selected_source = available_source_ids[0] if len(available_source_ids) > 0 else None
 else:
-    selected_source = available_source_ids[0] if len(available_source_ids) > 0 else None
+    selected_source = available_source_ids[0]  # Default to the first available source ID
 
 # Sidebar dropdown for selecting source ID
-if selected_source:
-    selected_source = st.sidebar.selectbox('Select Source ID:', available_source_ids, index=list(available_source_ids).index(selected_source))
-    # Store the selected source ID in session_state
-    st.session_state['selected_source'] = selected_source
-else:
-    st.error("No available Source IDs for the selected LCS filter.")
+selected_source = st.sidebar.selectbox('Select Source ID:', available_source_ids, index=list(available_source_ids).index(selected_source))
 
-# If a valid source is selected, continue processing
-if selected_source:
-    # Filter the data by the selected sourceID
-    df_filtered = df_filtered[df_filtered['sourceID'] == selected_source]
+# Store the selected source ID in session_state
+st.session_state['selected_source'] = selected_source
 
-    # Group the data by month and sourceID
-    df_filtered['month'] = df_filtered['utcTime'].dt.to_period('M')
-    df_filtered['month'] = df_filtered['month'].dt.to_timestamp()
+# Filter the data by the selected sourceID
+df_filtered = df_filtered[df_filtered['sourceID'] == selected_source]
 
-    # Count occurrences of each status by month for the selected sourceID
-    lcs_trend_month = df_filtered.groupby(['month', 'MainStatusMC']).size().unstack(fill_value=0)
+# Group the data by month and sourceID
+df_filtered['month'] = df_filtered['utcTime'].dt.to_period('M')
+df_filtered['month'] = df_filtered['month'].dt.to_timestamp()
 
-    # Layout with columns to organize the dashboard
-    col1, col2 = st.columns([3, 1])
+# Count occurrences of each status by month for the selected sourceID
+lcs_trend_month = df_filtered.groupby(['month', 'MainStatusMC']).size().unstack(fill_value=0)
 
-    # Plot trends with custom colors
-    fig = go.Figure()
-    status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
-    for status in lcs_trend_month.columns:
-        fig.add_trace(go.Scatter(x=lcs_trend_month.index, y=lcs_trend_month[status], 
-                                 mode='lines+markers', name=f'{status}', 
-                                 line=dict(color=status_colors.get(status, 'gray'))))
+# Layout with columns to organize the dashboard
+col1, col2 = st.columns([3, 1])
 
-    fig.update_layout(
-        title=f'Bucket Camera Performance Trends Over Months for Source ID: {selected_source} ({filter_option})',
-        xaxis_title='Month', yaxis_title='Count', legend_title='Status', template='plotly_white'
-    )
-    col1.plotly_chart(fig, use_container_width=True)
+# Plot trends with custom colors
+fig = go.Figure()
+status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
+for status in lcs_trend_month.columns:
+    fig.add_trace(go.Scatter(x=lcs_trend_month.index, y=lcs_trend_month[status], 
+                             mode='lines+markers', name=f'{status}', 
+                             line=dict(color=status_colors.get(status, 'gray'))))
 
-    # --- Pie chart based on bucketCamera ---
-    # Merge cleaning-related issues (bucketCamera values 1 and 3)
-    df_filtered['bucketCamera'] = df_filtered['bucketCamera'].replace({3: 1})
+fig.update_layout(
+    title=f'Bucket Camera Performance Trends Over Months for Source ID: {selected_source} ({filter_option})',
+    xaxis_title='Month', yaxis_title='Count', legend_title='Status', template='plotly_white'
+)
+col1.plotly_chart(fig, use_container_width=True)
 
-    # Count occurrences of all bucketCamera values (0-7)
-    bucket_camera_counts = df_filtered['bucketCamera'].value_counts()
+# --- Pie chart based on bucketCamera ---
+# Merge cleaning-related issues (bucketCamera values 1 and 3)
+df_filtered['bucketCamera'] = df_filtered['bucketCamera'].replace({3: 1})
 
-    # Map bucketCamera values to meaningful labels
-    bucket_camera_mapping = {
-        0: "Good Condition",
-        1: "Requires Cleaning / Cleaning & Adjustment needed",
-        2: "Requires Adjustment",
-        4: "Camera feed is black",
-        5: "Camera condition unknown",
-        6: "Mono Left/Right faulty",
-        7: "Damaged"
-    }
-    bucket_camera_counts.index = bucket_camera_counts.index.map(bucket_camera_mapping)
+# Count occurrences of all bucketCamera values (0-7)
+bucket_camera_counts = df_filtered['bucketCamera'].value_counts()
 
-    # Create a pie chart
-    fig_pie = go.Figure(data=[go.Pie(labels=bucket_camera_counts.index, 
-                                     values=bucket_camera_counts.values)])
+# Map bucketCamera values to meaningful labels
+bucket_camera_mapping = {
+    0: "Good Condition",
+    1: "Requires Cleaning / Cleaning & Adjustment needed",
+    2: "Requires Adjustment",
+    4: "Camera feed is black",
+    5: "Camera condition unknown",
+    6: "Mono Left/Right faulty",
+    7: "Damaged"
+}
+bucket_camera_counts.index = bucket_camera_counts.index.map(bucket_camera_mapping)
 
-    # Update layout to make the pie chart larger and place it underneath
-    fig_pie.update_layout(title="Bucket Camera Conditions", height=600, font=dict(size=18))
+# Create a pie chart
+fig_pie = go.Figure(data=[go.Pie(labels=bucket_camera_counts.index, 
+                                 values=bucket_camera_counts.values)])
 
-    # Display the pie chart underneath
-    st.plotly_chart(fig_pie, use_container_width=True)
+# Update layout to make the pie chart larger and place it underneath
+fig_pie.update_layout(title="Bucket Camera Conditions", height=600, font=dict(size=18))
+
+# Display the pie chart underneath
+st.plotly_chart(fig_pie, use_container_width=True)
