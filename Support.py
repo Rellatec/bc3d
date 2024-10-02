@@ -62,7 +62,7 @@ else:
     selected_source = available_source_ids[0]  # Default to the first available source ID
 
 # Sidebar dropdown for selecting source ID
-selected_source = st.sidebar.selectbox('Select Source ID:', available_source_ids, index=list(available_source_ids).index(selected_source))
+selected_source = st.sidebar.selectbox('Select System:', available_source_ids, index=list(available_source_ids).index(selected_source))
 
 # Store the selected source ID in session_state
 st.session_state['selected_source'] = selected_source
