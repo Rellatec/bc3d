@@ -107,7 +107,7 @@ if df is not None:
     # Map bucketCamera values to meaningful labels
     bucket_camera_mapping = {
         0: "Good Condition",
-        1: "Requires Cleaning / Cleaning & Adjustment needed",
+        1: "Requires Cleaning",
         2: "Requires Adjustment",
         4: "Camera feed is black",
         5: "Camera condition unknown",
