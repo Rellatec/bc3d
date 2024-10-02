@@ -32,9 +32,15 @@ filter_option = st.sidebar.selectbox(
     ('Has LCS', 'Has not LCS')
 )
 
-# Load the Excel data into a pandas DataFrame
-file_path = 'report_hw_27092024.xlsx'  # Update with the correct path
-df = pd.read_excel(file_path)
+# Load the CSV data into a pandas DataFrame
+file_path = 'report_hw_27092024.csv'  # Update with the correct path to your CSV file
+
+# Option 1: Try to load the file
+try:
+    df = pd.read_csv(file_path)  # Use pd.read_csv() for loading CSV
+except ValueError as e:
+    st.error(f"An error occurred while reading the CSV file: {e}")
+    st.stop()  # Stop execution if there's an error
 
 # Convert the 'utcTime' column to datetime
 df['utcTime'] = pd.to_datetime(df['utcTime'], errors='coerce')
@@ -43,9 +49,9 @@ df['utcTime'] = pd.to_datetime(df['utcTime'], errors='coerce')
 df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'MainStatusMC', 'sourceID', 'bucketCamera'])
 
 # Apply the filter based on the 'hasLCS' column (True for On, False for Off)
-if filter_option == 'LCS On':
+if filter_option == 'Has LCS':
     df_filtered = df_filtered[df_filtered['hasLCS'] == True]
-elif filter_option == 'LCS Off':
+elif filter_option == 'Has not LCS':
     df_filtered = df_filtered[df_filtered['hasLCS'] == False]
 
 # Filter out invalid or missing MainStatusMC values
