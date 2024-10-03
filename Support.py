@@ -105,7 +105,7 @@ if df is not None:
                                  line=dict(color=status_colors.get(status, 'gray'))))
 
     fig.update_layout(
-        title=f'Main Component Performance Trends Over Months for System: {selected_system} ({lcs_presence_filter})',
+        title=f'Main Status for the Main Component Over Months for System: {selected_system} ({lcs_presence_filter})',
         xaxis_title='Month', yaxis_title='Count', legend_title='Status', template='plotly_white'
     )
     col1.plotly_chart(fig, use_container_width=True)
