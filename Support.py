@@ -67,7 +67,17 @@ if df is not None:
     else:
         df_filtered = df_filtered[df_filtered['lcsStatus'] == 'OFF']
 
-    # List of available system names after filtering by LCS status
+    # Group the data by day (not month)
+    df_filtered['day'] = df_filtered['utcTime'].dt.date  # Group by exact day (year-month-day)
+
+    # --- Date filter based on specific days ---
+    unique_days = df_filtered['day'].unique()
+    selected_day = st.sidebar.selectbox("Select Day", unique_days)
+
+    # Filter the data by the selected day
+    df_filtered = df_filtered[df_filtered['day'] == selected_day]
+
+    # List of available system names after filtering by day
     available_system_names = sorted(df_filtered['systemName'].unique())
 
     # Sidebar dropdown for selecting system name
@@ -79,10 +89,6 @@ if df is not None:
 
     # Filter the data by the selected system name
     df_filtered = df_filtered[df_filtered['systemName'] == selected_system]
-
-    # Group the data by day and lcsStatus
-    df_filtered['day'] = df_filtered['utcTime'].dt.to_period('D')
-    df_filtered['day'] = df_filtered['day'].dt.to_timestamp()
 
     # Count occurrences of lcsStatus by day
     lcs_trend_day = df_filtered.groupby(['day', 'lcsStatus']).size().unstack(fill_value=0)
