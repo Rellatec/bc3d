@@ -41,19 +41,32 @@ df = load_data()
 
 if df is not None:
     # Filter the data for valid dates and necessary columns
-    df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'MainStatusMC', 'systemName', 'bucketCamera'])
+    df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'lcsStatus', 'MainStatusMC', 'systemName', 'bucketCamera'])
 
     # --- Sidebar for Filter Options ---
     st.sidebar.title("Filters")
-    filter_option = st.sidebar.selectbox(
-        'Choose LCS Status to display:',
+    
+    # Filter based on LCS presence or not
+    lcs_presence_filter = st.sidebar.selectbox(
+        'Choose LCS Installation Status:',
         ('Has LCS', 'Has not LCS')
     )
 
-    # Apply the filter based on the 'hasLCS' column (True for On, False for Off)
-    if filter_option == 'Has LCS':
+    # Apply filter for systems with or without LCS
+    if lcs_presence_filter == 'Has LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == True]
-    elif filter_option == 'Has not LCS':
+        
+        # Further filter for LCS working status
+        lcs_working_filter = st.sidebar.selectbox(
+            'LCS Working Status:',
+            ('LCS Working', 'LCS Not Working')
+        )
+        if lcs_working_filter == 'LCS Working':
+            df_filtered = df_filtered[df_filtered['lcsStatus'] == 1.0]
+        else:
+            df_filtered = df_filtered[df_filtered['lcsStatus'] == 0.0]
+    
+    elif lcs_presence_filter == 'Has not LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == False]
 
     # Filter out invalid or missing MainStatusMC values
@@ -92,7 +105,7 @@ if df is not None:
                                  line=dict(color=status_colors.get(status, 'gray'))))
 
     fig.update_layout(
-        title=f'Bucket Camera Performance Trends Over Months for System: {selected_system} ({filter_option})',
+        title=f'Bucket Camera Performance Trends Over Months for System: {selected_system} ({lcs_presence_filter})',
         xaxis_title='Month', yaxis_title='Count', legend_title='Status', template='plotly_white'
     )
     col1.plotly_chart(fig, use_container_width=True)
