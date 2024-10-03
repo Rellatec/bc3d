@@ -93,7 +93,11 @@ if df is not None:
 
     # Plot trends with custom colors
     fig = go.Figure()
-    status_colors = {'Led Working': '#00B7F1', 'Needs Adjustment': 'red', 'Needs Cleaning': '#DAA520'}
+    status_colors = {
+        'Led is Working': '#00B7F1',  # Blue for 'Led is Working'
+        'Led needs Adjustment': 'red',  # Red for 'Led needs Adjustment'
+        'Led needs Cleaning': '#FFD700'  # Yellow for 'Led needs Cleaning'
+    }
     for status in lcs_trend_month.columns:
         fig.add_trace(go.Scatter(x=lcs_trend_month.index, y=lcs_trend_month[status], 
                                  mode='lines+markers', name=f'{status}', 
