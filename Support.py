@@ -80,37 +80,19 @@ if df is not None:
     df_filtered['day'] = df_filtered['utcTime'].dt.to_period('D')
     df_filtered['day'] = df_filtered['day'].dt.to_timestamp()
 
-    # Count occurrences of each status and LCS working status by day for the selected system
-    lcs_trend_day = df_filtered.groupby(['day', 'MainStatusMC', 'lcsStatus']).size().unstack(fill_value=0)
+    # Count occurrences of each status by day for the selected system
+    lcs_trend_day = df_filtered.groupby(['day', 'MainStatusMC']).size().unstack(fill_value=0)
 
     # Layout with columns to organize the dashboard
     col1, col2 = st.columns([3, 1])
 
-    # Plot trends with custom colors for LCS Working/Not Working
+    # Plot trends with custom colors
     fig = go.Figure()
     status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
-
-    # Plot for LCS Working (lcsStatus == 1.0)
-    for status in lcs_trend_day.columns.levels[0]:
-        if (status, 1.0) in lcs_trend_day.columns:
-            fig.add_trace(go.Scatter(
-                x=lcs_trend_day.index,
-                y=lcs_trend_day[(status, 1.0)],
-                mode='lines+markers',
-                name=f'{status} (LCS Working)',
-                line=dict(color=status_colors.get(status, 'gray'))
-            ))
-
-    # Plot for LCS Not Working (lcsStatus == 0.0)
-    for status in lcs_trend_day.columns.levels[0]:
-        if (status, 0.0) in lcs_trend_day.columns:
-            fig.add_trace(go.Scatter(
-                x=lcs_trend_day.index,
-                y=lcs_trend_day[(status, 0.0)],
-                mode='lines+markers',
-                name=f'{status} (LCS Not Working)',
-                line=dict(color=status_colors.get(status, 'gray'), dash='dot')
-            ))
+    for status in lcs_trend_day.columns:
+        fig.add_trace(go.Scatter(x=lcs_trend_day.index, y=lcs_trend_day[status], 
+                                 mode='lines+markers', name=f'{status}', 
+                                 line=dict(color=status_colors.get(status, 'gray'))))
 
     fig.update_layout(
         title=f'Main Component Performance Trends Over Days for System: {selected_system} ({lcs_presence_filter})',
