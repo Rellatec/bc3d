@@ -41,7 +41,7 @@ df = load_data()
 
 if df is not None:
     # Filter the data for valid dates and necessary columns
-    df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'lcsStatus', 'MainStatusMC', 'systemName', 'bucketCamera'])
+    df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'lcsStatus', 'systemName'])
 
     # --- Sidebar for Filter Options ---
     st.sidebar.title("Filters")
@@ -61,15 +61,11 @@ if df is not None:
     # Map 0 and 1 to 'OFF' and 'ON' for better readability in the lcsStatus column
     df_filtered['lcsStatus'] = df_filtered['lcsStatus'].replace({0: 'OFF', 1: 'ON'})
 
-    # Combine lcsPresence and lcsStatus into one filter for the dashboard (assuming ON for Has LCS, OFF for Has not LCS)
+    # Combine lcsPresence and lcsStatus into one filter for the dashboard
     if lcs_presence_filter == 'Has LCS':
         df_filtered = df_filtered[df_filtered['lcsStatus'] == 'ON']
     else:
         df_filtered = df_filtered[df_filtered['lcsStatus'] == 'OFF']
-
-    # Filter out invalid or missing MainStatusMC values
-    valid_statuses = ['GOOD', 'WRONG', 'AVERAGE']
-    df_filtered = df_filtered[df_filtered['MainStatusMC'].isin(valid_statuses)]
 
     # List of available system names after filtering by LCS status
     available_system_names = sorted(df_filtered['systemName'].unique())
@@ -84,28 +80,28 @@ if df is not None:
     # Filter the data by the selected system name
     df_filtered = df_filtered[df_filtered['systemName'] == selected_system]
 
-    # Group the data by day and systemName
+    # Group the data by day and lcsStatus
     df_filtered['day'] = df_filtered['utcTime'].dt.to_period('D')
     df_filtered['day'] = df_filtered['day'].dt.to_timestamp()
 
-    # Count occurrences of each status by day for the selected system
-    lcs_trend_day = df_filtered.groupby(['day', 'MainStatusMC']).size().unstack(fill_value=0)
+    # Count occurrences of lcsStatus by day
+    lcs_trend_day = df_filtered.groupby(['day', 'lcsStatus']).size().unstack(fill_value=0)
 
     # Layout with columns to organize the dashboard
     col1, col2 = st.columns([3, 1])
 
     # Plot trends with custom colors
     fig = go.Figure()
-    status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
+    status_colors = {'ON': '#00B7F1', 'OFF': 'red'}
     for status in lcs_trend_day.columns:
         fig.add_trace(go.Scatter(x=lcs_trend_day.index, y=lcs_trend_day[status], 
-                                 mode='lines+markers', name=f'{status}', 
+                                 mode='lines+markers', name=f'LCS {status}', 
                                  line=dict(color=status_colors.get(status, 'gray'))))
 
     # Update layout to reflect "days" instead of "counts"
     fig.update_layout(
-        title=f'Main Component Performance Trends Over Days for System: {selected_system} ({lcs_presence_filter})',
-        xaxis_title='Day', yaxis_title='Days with Status Recorded', legend_title='Status', template='plotly_white'
+        title=f'LCS Status Trends Over Days for System: {selected_system} ({lcs_presence_filter})',
+        xaxis_title='Day', yaxis_title='Count of Days', legend_title='LCS Status', template='plotly_white'
     )
     col1.plotly_chart(fig, use_container_width=True)
 
@@ -139,4 +135,3 @@ if df is not None:
     st.plotly_chart(fig_pie, use_container_width=True)
 
 else:
-    st.error("Failed to load data. Please check your CSV file and try again.")
