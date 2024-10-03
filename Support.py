@@ -55,16 +55,6 @@ if df is not None:
     # Apply filter for systems with or without LCS
     if lcs_presence_filter == 'Has LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == True]
-        
-        # Further filter for LCS working status
-        lcs_working_filter = st.sidebar.selectbox(
-            'LCS Working Status:',
-            ('LCS Working', 'LCS Not Working')
-        )
-        if lcs_working_filter == 'LCS Working':
-            df_filtered = df_filtered[df_filtered['lcsStatus'] == 1.0]
-        else:
-            df_filtered = df_filtered[df_filtered['lcsStatus'] == 0.0]
     
     elif lcs_presence_filter == 'Has not LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == False]
