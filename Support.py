@@ -135,3 +135,4 @@ if df is not None:
     st.plotly_chart(fig_pie, use_container_width=True)
 
 else:
+    st.error("Failed to load data. Please check your CSV file and try again.")
