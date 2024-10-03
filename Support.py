@@ -55,6 +55,7 @@ if df is not None:
     # Apply filter for systems with or without LCS
     if lcs_presence_filter == 'Has LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == True]
+    
     elif lcs_presence_filter == 'Has not LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == False]
 
@@ -75,18 +76,12 @@ if df is not None:
     # Filter the data by the selected system name
     df_filtered = df_filtered[df_filtered['systemName'] == selected_system]
 
-    # Check if LCS is working or not (assuming 'lcsStatus' contains information like 'ACTIVE', 'INACTIVE', etc.)
-    df_filtered['LCS_Working'] = df_filtered['lcsStatus'] == 'ACTIVE'
-
-    # Group the data by day and systemName, including LCS working status
+    # Group the data by day and systemName
     df_filtered['day'] = df_filtered['utcTime'].dt.to_period('D')
     df_filtered['day'] = df_filtered['day'].dt.to_timestamp()
 
     # Count occurrences of each status by day for the selected system
     lcs_trend_day = df_filtered.groupby(['day', 'MainStatusMC']).size().unstack(fill_value=0)
-
-    # Create a series to track LCS working days
-    lcs_working_day = df_filtered.groupby('day')['LCS_Working'].any().astype(int)
 
     # Layout with columns to organize the dashboard
     col1, col2 = st.columns([3, 1])
@@ -99,15 +94,10 @@ if df is not None:
                                  mode='lines+markers', name=f'{status}', 
                                  line=dict(color=status_colors.get(status, 'gray'))))
 
-    # Add the LCS working status as a separate trace
-    fig.add_trace(go.Scatter(x=lcs_working_day.index, y=lcs_working_day, 
-                             mode='lines+markers', name='LCS Working', 
-                             line=dict(color='green', dash='dash')))
-
-    # Update layout to reflect LCS working status
+    # Update layout to reflect "days" instead of "counts"
     fig.update_layout(
         title=f'Main Component Performance Trends Over Days for System: {selected_system} ({lcs_presence_filter})',
-        xaxis_title='Day', yaxis_title='Days with Status Recorded or LCS Working', legend_title='Status', template='plotly_white'
+        xaxis_title='Day', yaxis_title='Days with Status Recorded', legend_title='Status', template='plotly_white'
     )
     col1.plotly_chart(fig, use_container_width=True)
 
