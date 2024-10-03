@@ -59,9 +59,9 @@ if df is not None:
     elif lcs_presence_filter == 'Has not LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == False]
 
-    # Filter out invalid or missing MainStatusMC values
-    valid_statuses = ['GOOD', 'WRONG', 'AVERAGE']
-    df_filtered = df_filtered[df_filtered['MainStatusMC'].isin(valid_statuses)]
+    # Filter out invalid or missing lcsStatus values
+    valid_statuses = ['LCS Working', 'LCS Not Working']  # Replace with actual values in your data
+    df_filtered = df_filtered[df_filtered['lcsStatus'].isin(valid_statuses)]
 
     # List of available system names after filtering by LCS status
     available_system_names = sorted(df_filtered['systemName'].unique())
@@ -80,24 +80,24 @@ if df is not None:
     df_filtered['day'] = df_filtered['utcTime'].dt.to_period('D')
     df_filtered['day'] = df_filtered['day'].dt.to_timestamp()
 
-    # Count occurrences of each status by day for the selected system
-    lcs_trend_day = df_filtered.groupby(['day', 'MainStatusMC']).size().unstack(fill_value=0)
+    # Count occurrences of each lcsStatus by day for the selected system
+    lcs_trend_day = df_filtered.groupby(['day', 'lcsStatus']).size().unstack(fill_value=0)
 
     # Layout with columns to organize the dashboard
     col1, col2 = st.columns([3, 1])
 
-    # Plot trends with custom colors
+    # Plot trends with custom colors for lcsStatus
     fig = go.Figure()
-    status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
+    lcs_status_colors = {'LCS Working': '#00B7F1', 'LCS Not Working': 'red'}  # You can update with actual values in your data
     for status in lcs_trend_day.columns:
         fig.add_trace(go.Scatter(x=lcs_trend_day.index, y=lcs_trend_day[status], 
                                  mode='lines+markers', name=f'{status}', 
-                                 line=dict(color=status_colors.get(status, 'gray'))))
+                                 line=dict(color=lcs_status_colors.get(status, 'gray'))))
 
     # Update layout to reflect "days" instead of "counts"
     fig.update_layout(
-        title=f'Main Component Performance Trends Over Days for System: {selected_system} ({lcs_presence_filter})',
-        xaxis_title='Day', yaxis_title='Days with Status Recorded', legend_title='Status', template='plotly_white'
+        title=f'LCS Working Status Trends Over Days for System: {selected_system} ({lcs_presence_filter})',
+        xaxis_title='Day', yaxis_title='Days with Status Recorded', legend_title='LCS Status', template='plotly_white'
     )
     col1.plotly_chart(fig, use_container_width=True)
 
