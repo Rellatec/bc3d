@@ -64,7 +64,7 @@ if df is not None:
     status_mapping = {
         'GOOD': 'Led is Working',
         'WRONG': 'Led needs Adjustment',
-        'AVERAGE': 'Needs Cleaning'
+        'AVERAGE': 'Led needs Cleaning'
     }
     df_filtered['MainStatusMC'] = df_filtered['MainStatusMC'].map(status_mapping)
 
