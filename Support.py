@@ -55,16 +55,6 @@ if df is not None:
     # Apply filter for systems with or without LCS
     if lcs_presence_filter == 'Has LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == True]
-        
-        # Further filter for LCS working status
-        lcs_working_filter = st.sidebar.selectbox(
-            'LCS Working Status:',
-            ('LCS Working', 'LCS Not Working')
-        )
-        if lcs_working_filter == 'LCS Working':
-            df_filtered = df_filtered[df_filtered['lcsStatus'] == 1.0]
-        else:
-            df_filtered = df_filtered[df_filtered['lcsStatus'] == 0.0]
     
     elif lcs_presence_filter == 'Has not LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == False]
@@ -90,23 +80,38 @@ if df is not None:
     df_filtered['day'] = df_filtered['utcTime'].dt.to_period('D')
     df_filtered['day'] = df_filtered['day'].dt.to_timestamp()
 
-    # Count occurrences of each status by day for the selected system
-    lcs_trend_day = df_filtered.groupby(['day', 'MainStatusMC']).size().unstack(fill_value=0)
+    # Create a line for each combination of MainStatusMC and LCS status
+    lcs_trend_day = df_filtered.groupby(['day', 'MainStatusMC', 'lcsStatus']).size().unstack(fill_value=0)
 
     # Layout with columns to organize the dashboard
     col1, col2 = st.columns([3, 1])
 
-    # Plot trends with custom colors
+    # Plot trends with LCS Working Status shown in the graph
     fig = go.Figure()
     status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
-    for status in lcs_trend_day.columns:
-        fig.add_trace(go.Scatter(x=lcs_trend_day.index, y=lcs_trend_day[status], 
-                                 mode='lines+markers', name=f'{status}', 
-                                 line=dict(color=status_colors.get(status, 'gray'))))
+    
+    # Loop through the status and LCS working state
+    for status in ['GOOD', 'WRONG', 'AVERAGE']:
+        for lcs_state in [0.0, 1.0]:  # 0.0 means not working, 1.0 means working
+            lcs_label = 'LCS Working' if lcs_state == 1.0 else 'LCS Not Working'
+            status_label = f'{status} ({lcs_label})'
+            filtered_status = df_filtered[(df_filtered['MainStatusMC'] == status) & (df_filtered['lcsStatus'] == lcs_state)]
+            fig.add_trace(go.Scatter(
+                x=filtered_status['day'], 
+                y=filtered_status['MainStatusMC'].index, 
+                mode='lines+markers', 
+                name=status_label,
+                line=dict(color=status_colors.get(status, 'gray')),
+                hoverinfo='text',
+                hovertext=[f'{status_label} on {day}' for day in filtered_status['day']]
+            ))
 
     fig.update_layout(
         title=f'Main Component Performance Trends Over Days for System: {selected_system} ({lcs_presence_filter})',
-        xaxis_title='Day', yaxis_title='Count', legend_title='Status', template='plotly_white'
+        xaxis_title='Day', 
+        yaxis_title='System Status', 
+        legend_title='Status and LCS Working State', 
+        template='plotly_white'
     )
     col1.plotly_chart(fig, use_container_width=True)
 
