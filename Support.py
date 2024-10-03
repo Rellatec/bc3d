@@ -52,12 +52,12 @@ if df is not None:
         ('Has LCS', 'Has not LCS')
     )
 
-    # Apply filter for systems with or without LCS
+    # Apply filter for systems with or without LCS using 0 (False) and 1 (True)
     if lcs_presence_filter == 'Has LCS':
-        df_filtered = df_filtered[df_filtered['hasLCS'] == True]
+        df_filtered = df_filtered[df_filtered['hasLCS'] == 1]
     
     elif lcs_presence_filter == 'Has not LCS':
-        df_filtered = df_filtered[df_filtered['hasLCS'] == False]
+        df_filtered = df_filtered[df_filtered['hasLCS'] == 0]
 
     # Filter out invalid or missing lcsStatus values
     valid_statuses = ['GOOD', 'WRONG', 'AVERAGE']  # Adjust the valid statuses if necessary for lcsStatus
