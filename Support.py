@@ -41,20 +41,18 @@ df = load_data()
 
 if df is not None:
     # Filter the data for valid dates and necessary columns
-    df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'lcsStatus', 'MainStatusMC', 'systemName', 'bucketCamera'])
+    df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'MainStatusMC', 'systemName', 'bucketCamera'])
 
     # --- Sidebar for Filter Options ---
     st.sidebar.title("Filters")
     filter_option = st.sidebar.selectbox(
         'Choose LCS Status to display:',
-        ('LCS Working', 'LCS Not Working', 'Has not LCS')
+        ('Has LCS', 'Has not LCS')
     )
 
-    # Apply the filter based on 'hasLCS' and 'lcsStatus' columns
-    if filter_option == 'LCS Working':
-        df_filtered = df_filtered[(df_filtered['hasLCS'] == True) & (df_filtered['lcsStatus'] == 1.0)]
-    elif filter_option == 'LCS Not Working':
-        df_filtered = df_filtered[(df_filtered['hasLCS'] == True) & (df_filtered['lcsStatus'] == 0.0)]
+    # Apply the filter based on the 'hasLCS' column (True for On, False for Off)
+    if filter_option == 'Has LCS':
+        df_filtered = df_filtered[df_filtered['hasLCS'] == True]
     elif filter_option == 'Has not LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == False]
 
