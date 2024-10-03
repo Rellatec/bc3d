@@ -59,6 +59,19 @@ if df is not None:
     elif lcs_presence_filter == 'Has not LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == False]
 
+    # Map 0 and 1 to 'OFF' and 'ON' for better readability
+    df_filtered['lcsStatus'] = df_filtered['lcsStatus'].replace({0: 'OFF', 1: 'ON'})
+
+    # Filter by LCS status (ON/OFF/ALL)
+    lcs_status_filter = st.sidebar.selectbox(
+        'Choose LCS Status:',
+        ('ALL', 'ON', 'OFF')
+    )
+
+    # Apply filter for LCS status
+    if lcs_status_filter != 'ALL':
+        df_filtered = df_filtered[df_filtered['lcsStatus'] == lcs_status_filter]
+
     # Filter out invalid or missing MainStatusMC values
     valid_statuses = ['GOOD', 'WRONG', 'AVERAGE']
     df_filtered = df_filtered[df_filtered['MainStatusMC'].isin(valid_statuses)]
@@ -129,5 +142,6 @@ if df is not None:
 
     # Display the pie chart underneath
     st.plotly_chart(fig_pie, use_container_width=True)
+
 else:
     st.error("Failed to load data. Please check your CSV file and try again.")
