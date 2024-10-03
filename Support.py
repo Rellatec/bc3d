@@ -60,6 +60,14 @@ if df is not None:
     valid_statuses = ['GOOD', 'WRONG', 'AVERAGE']
     df_filtered = df_filtered[df_filtered['MainStatusMC'].isin(valid_statuses)]
 
+    # Map MainStatusMC to new labels
+    status_mapping = {
+        'GOOD': 'Led Working',
+        'WRONG': 'Needs Adjustment',
+        'AVERAGE': 'Needs Cleaning'
+    }
+    df_filtered['MainStatusMC'] = df_filtered['MainStatusMC'].map(status_mapping)
+
     # List of available system names after filtering by LCS status
     available_system_names = sorted(df_filtered['systemName'].unique())
 
@@ -85,7 +93,7 @@ if df is not None:
 
     # Plot trends with custom colors
     fig = go.Figure()
-    status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
+    status_colors = {'Led Working': '#00B7F1', 'Needs Adjustment': 'red', 'Needs Cleaning': '#DAA520'}
     for status in lcs_trend_month.columns:
         fig.add_trace(go.Scatter(x=lcs_trend_month.index, y=lcs_trend_month[status], 
                                  mode='lines+markers', name=f'{status}', 
