@@ -23,7 +23,7 @@ st.markdown("""
 
 # --- Title and Introduction ---
 st.title('LCS Status and BC3D Performance Analysis')
-st.write("This interactive dashboard provides insights into how the Lens Cleaning System (LCS) impacts the performance of the BC3D over time. The analysis is based on performance statuses from 'MainStatusMC', which reflect the overall health and cleanliness of the cameras. Use the filters to explore trends.")
+st.write("This interactive dashboard provides insights into how the Lens Cleaning System (LCS) impacts the performance of the BC3D over time. Use the filters to explore trends.")
 
 # Load the CSV data into a pandas DataFrame
 @st.cache_data
