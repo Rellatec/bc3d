@@ -94,9 +94,10 @@ if df is not None:
                                  mode='lines+markers', name=f'{status}', 
                                  line=dict(color=status_colors.get(status, 'gray'))))
 
+    # Update layout to reflect "days" instead of "counts"
     fig.update_layout(
         title=f'Main Component Performance Trends Over Days for System: {selected_system} ({lcs_presence_filter})',
-        xaxis_title='Day', yaxis_title='Count', legend_title='Status', template='plotly_white'
+        xaxis_title='Day', yaxis_title='Days with Status Recorded', legend_title='Status', template='plotly_white'
     )
     col1.plotly_chart(fig, use_container_width=True)
 
