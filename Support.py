@@ -86,12 +86,12 @@ if df is not None:
     # Filter the data by the selected system name
     df_filtered = df_filtered[df_filtered['systemName'] == selected_system]
 
-    # Group the data by month and systemName
-    df_filtered['month'] = df_filtered['utcTime'].dt.to_period('M')
-    df_filtered['month'] = df_filtered['month'].dt.to_timestamp()
+    # Group the data by day and systemName
+    df_filtered['day'] = df_filtered['utcTime'].dt.to_period('D')
+    df_filtered['day'] = df_filtered['day'].dt.to_timestamp()
 
-    # Count occurrences of each status by month for the selected system
-    lcs_trend_month = df_filtered.groupby(['month', 'MainStatusMC']).size().unstack(fill_value=0)
+    # Count occurrences of each status by day for the selected system
+    lcs_trend_day = df_filtered.groupby(['day', 'MainStatusMC']).size().unstack(fill_value=0)
 
     # Layout with columns to organize the dashboard
     col1, col2 = st.columns([3, 1])
@@ -99,14 +99,14 @@ if df is not None:
     # Plot trends with custom colors
     fig = go.Figure()
     status_colors = {'GOOD': '#00B7F1', 'WRONG': 'red', 'AVERAGE': '#DAA520'}
-    for status in lcs_trend_month.columns:
-        fig.add_trace(go.Scatter(x=lcs_trend_month.index, y=lcs_trend_month[status], 
+    for status in lcs_trend_day.columns:
+        fig.add_trace(go.Scatter(x=lcs_trend_day.index, y=lcs_trend_day[status], 
                                  mode='lines+markers', name=f'{status}', 
                                  line=dict(color=status_colors.get(status, 'gray'))))
 
     fig.update_layout(
-        title=f'Main Status for the Main Component Over Months for System: {selected_system} ({lcs_presence_filter})',
-        xaxis_title='Month', yaxis_title='Count', legend_title='Status', template='plotly_white'
+        title=f'Main Component Performance Trends Over Days for System: {selected_system} ({lcs_presence_filter})',
+        xaxis_title='Day', yaxis_title='Count', legend_title='Status', template='plotly_white'
     )
     col1.plotly_chart(fig, use_container_width=True)
 
