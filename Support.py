@@ -1,6 +1,7 @@
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import numpy as np
 
 # --- Page Configuration ---
 st.set_page_config(page_title="LCS Performance Dashboard", layout="wide")
@@ -31,8 +32,11 @@ def load_data():
     file_path = 'report_hw_27092024.csv'  # Update with the correct path to your CSV file
     try:
         df = pd.read_csv(file_path)
-        df = df.dropna()  # Drop rows with any null values
-        df = df[df['systemGeneration']=='Gen 3']
+        # Replace 'null' strings with actual NaN values
+        df.replace('null', np.nan, inplace=True)
+        # Drop rows where 'lcsStatus' or 'hasLCS' contain NaN
+        df = df.dropna(subset=['lcsStatus', 'hasLCS'])
+        df = df[df['systemGeneration'] == 'Gen 3']
         df['utcTime'] = pd.to_datetime(df['utcTime'], errors='coerce')
         return df
     except ValueError as e:
@@ -42,8 +46,9 @@ def load_data():
 df = load_data()
 
 if df is not None:
+    # Proceed with the rest of your code as before
     # Filter the data for valid dates and necessary columns
-    df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'lcsStatus', 'systemName', 'bucketCamera'])
+    df_filtered = df.dropna(subset=['utcTime', 'lcsStatus', 'systemName', 'bucketCamera'])
 
     # --- Sidebar for Filter Options ---
     st.sidebar.title("Filters")
