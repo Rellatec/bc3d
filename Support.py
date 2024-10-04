@@ -46,7 +46,6 @@ def load_data():
 df = load_data()
 
 if df is not None:
-    # Proceed with the rest of your code as before
     # Filter the data for valid dates and necessary columns
     df_filtered = df.dropna(subset=['utcTime', 'lcsStatus', 'systemName', 'bucketCamera'])
 
@@ -101,7 +100,7 @@ if df is not None:
     # Group the data by date and count ON and OFF statuses for LCS trend
     lcs_trend = df_filtered.groupby(group_by)['lcsStatus'].value_counts().unstack(fill_value=0).reset_index()
 
-    # Plot LCS status trends with custom colors
+    # --- Line Chart for LCS Status Trend ---
     fig = go.Figure()
     
     if 'ON' in lcs_trend.columns:
@@ -138,8 +137,47 @@ if df is not None:
         )
     )
 
-    # Display the LCS trend line chart
+    # Display the LCS trend line chart as the first chart
     st.plotly_chart(fig, use_container_width=True, key="lcs_status_trend")
+
+    # --- Bar Chart for LCS Status Counts with Counts Displayed on Hover ---
+    fig_bar = go.Figure()
+    
+    if 'ON' in lcs_trend.columns:
+        fig_bar.add_trace(go.Bar(
+            x=lcs_trend[group_by],
+            y=lcs_trend['ON'],
+            name='LCS Working (ON)',
+            marker=dict(color='#00B7F1'),
+            hovertemplate='LCS Working (ON): %{y}<extra></extra>'
+        ))
+    
+    if 'OFF' in lcs_trend.columns:
+        fig_bar.add_trace(go.Bar(
+            x=lcs_trend[group_by],
+            y=lcs_trend['OFF'],
+            name='LCS Not Working (OFF)',
+            marker=dict(color='red'),
+            hovertemplate='LCS Not Working (OFF): %{y}<extra></extra>'
+        ))
+
+    fig_bar.update_layout(
+        title=f'LCS Working vs. Not Working ({time_aggregation}) for System: {selected_system}',
+        xaxis_title='Date',
+        yaxis_title='Count',
+        barmode='group',
+        template='plotly_white',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+
+    # Display the bar chart as the second chart
+    st.plotly_chart(fig_bar, use_container_width=True, key="lcs_status_bar_chart")
 
     # --- Pie chart based on bucketCamera aggregated by selected time frame ---
     # Merge cleaning-related issues (bucketCamera values 1 and 3)
