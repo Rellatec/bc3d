@@ -31,6 +31,7 @@ def load_data():
     file_path = 'report_hw_27092024.csv'  # Update with the correct path to your CSV file
     try:
         df = pd.read_csv(file_path)
+        df = df.dropna()  # Drop rows with any null values
         df = df[df['systemGeneration']=='Gen 3']
         df['utcTime'] = pd.to_datetime(df['utcTime'], errors='coerce')
         return df
