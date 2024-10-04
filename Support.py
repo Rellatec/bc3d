@@ -93,21 +93,27 @@ if df is not None:
     bucket_camera_trend = df_filtered.groupby([group_by, 'bucketCameraStatus']).size().unstack(fill_value=0).reset_index()
 
     fig_bucket_bar = go.Figure()
-    fig_bucket_bar.add_trace(go.Bar(
-        x=bucket_camera_trend[group_by],
-        y=bucket_camera_trend['Dirty'],
-        name='Dirty',
-        marker_color='red'  # Set color to red for Dirty condition
-    ))
-    fig_bucket_bar.add_trace(go.Bar(
-        x=bucket_camera_trend[group_by],
-        y=bucket_camera_trend['Other'],
-        name='Other',
-        marker_color='#00B7F1'  # Set color to blue for Other condition
-    ))
+
+    # Add "Dirty" trace only if it exists in the DataFrame
+    if 'Dirty' in bucket_camera_trend.columns:
+        fig_bucket_bar.add_trace(go.Bar(
+            x=bucket_camera_trend[group_by],
+            y=bucket_camera_trend['Dirty'],
+            name='Dirty',
+            marker_color='red'  # Set color to red for Dirty condition
+        ))
+
+    # Add "Other" trace only if it exists in the DataFrame
+    if 'Other' in bucket_camera_trend.columns:
+        fig_bucket_bar.add_trace(go.Bar(
+            x=bucket_camera_trend[group_by],
+            y=bucket_camera_trend['Other'],
+            name='Other',
+            marker_color='#00B7F1'  # Set color to blue for Other condition
+        ))
 
     fig_bucket_bar.update_layout(
-        title=f'Bucket Camera Condition ({time_aggregation}) for System: {selected_system}',
+        title=f'Bucket Camera Condition Bar Chart ({time_aggregation}) for System: {selected_system}',
         xaxis_title='Date',
         yaxis_title='Count',
         barmode='group',
@@ -128,18 +134,24 @@ if df is not None:
     lcs_trend = df_filtered.groupby([group_by, 'lcsStatus']).size().unstack(fill_value=0).reset_index()
 
     fig_lcs_bar = go.Figure()
-    fig_lcs_bar.add_trace(go.Bar(
-        x=lcs_trend[group_by],
-        y=lcs_trend['ON'],
-        name='LCS ON',
-        marker_color='#00B7F1'  # Set color to blue for ON status
-    ))
-    fig_lcs_bar.add_trace(go.Bar(
-        x=lcs_trend[group_by],
-        y=lcs_trend['OFF'],
-        name='LCS OFF',
-        marker_color='red'  # Set color to red for OFF status
-    ))
+
+    # Add "ON" trace only if it exists in the DataFrame
+    if 'ON' in lcs_trend.columns:
+        fig_lcs_bar.add_trace(go.Bar(
+            x=lcs_trend[group_by],
+            y=lcs_trend['ON'],
+            name='LCS ON',
+            marker_color='#00B7F1'  # Set color to blue for ON status
+        ))
+
+    # Add "OFF" trace only if it exists in the DataFrame
+    if 'OFF' in lcs_trend.columns:
+        fig_lcs_bar.add_trace(go.Bar(
+            x=lcs_trend[group_by],
+            y=lcs_trend['OFF'],
+            name='LCS OFF',
+            marker_color='red'  # Set color to red for OFF status
+        ))
 
     fig_lcs_bar.update_layout(
         title=f'LCS Status Bar Chart ({time_aggregation}) for System: {selected_system}',
