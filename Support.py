@@ -107,7 +107,7 @@ if df is not None:
     ))
 
     fig_bucket_bar.update_layout(
-        title=f'Bucket Camera Condition Bar Chart ({time_aggregation}) for System: {selected_system}',
+        title=f'Bucket Camera Condition ({time_aggregation}) for System: {selected_system}',
         xaxis_title='Date',
         yaxis_title='Count',
         barmode='group',
