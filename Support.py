@@ -31,12 +31,8 @@ def load_data():
     file_path = 'report_hw_27092024.csv'  # Update with the correct path to your CSV file
     try:
         df = pd.read_csv(file_path)
-        df = df[df['systemGeneration'] == 'Gen 3']
+        df = df[df['systemGeneration']=='Gen 3']
         df['utcTime'] = pd.to_datetime(df['utcTime'], errors='coerce')
-        
-        # Remove rows with null values in 'hasLCS' and 'lcsStatus'
-        df = df.dropna(subset=['hasLCS', 'lcsStatus'])
-        
         return df
     except ValueError as e:
         st.error(f"An error occurred while reading the CSV file: {e}")
@@ -46,7 +42,7 @@ df = load_data()
 
 if df is not None:
     # Filter the data for valid dates and necessary columns
-    df_filtered = df.dropna(subset=['utcTime', 'systemName', 'bucketCamera'])
+    df_filtered = df.dropna(subset=['utcTime', 'hasLCS', 'lcsStatus', 'systemName', 'bucketCamera'])
 
     # --- Sidebar for Filter Options ---
     st.sidebar.title("Filters")
