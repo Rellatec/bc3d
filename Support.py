@@ -55,13 +55,13 @@ if df is not None:
     # Filter based on LCS presence or not
     lcs_presence_filter = st.sidebar.selectbox(
         'Choose LCS Installation Status:',
-        ('Has LCS', 'Has not LCS')
+        ('Has LCS', 'No LCS')
     )
 
     # Apply filter for systems with or without LCS
     if lcs_presence_filter == 'Has LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == True]
-    elif lcs_presence_filter == 'Has not LCS':
+    elif lcs_presence_filter == 'No LCS':
         df_filtered = df_filtered[df_filtered['hasLCS'] == False]
 
     # List of available system names after filtering by LCS status
